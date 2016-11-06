@@ -35,3 +35,21 @@ class PanTilt(object):
         pulse = int(np.interp(angle, [-1,0,1], self.tilt_limits))
         self.pwm.set_pwm(self.tilt_channel, 0, pulse)
          
+if __name__ == "__main__":
+    # These values are specific to individual motors, change them for yours!
+    p = PanTilt([140, 385, 630], [240, 450, 670])
+    
+    print('Pan-tilt demo!\n')
+
+    print('Commands:')
+    print('> p x (pan to x in [-1, 1])')
+    print('> t x (tilt to x in [-1, 1])')
+
+    while True:
+        cmd = raw_input('> ')
+        cmd, x = cmd.split()
+	x = float(x)
+        if cmd == 'p':
+            p.pan(x)
+        if cmd == 't':
+            p.tilt(x)
