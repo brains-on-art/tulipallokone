@@ -52,3 +52,22 @@ class LightSensor(object):
             self.rising_thresholds.append((threshold, f))
         if threshold_type in ['falling', 'both']:
             self.falling_threshold.append((threshold, f))
+
+if __name__ == '__main__':
+    l = LightSensor()
+
+    print('Light sensor demo!')s
+
+    def f():
+        print('Light sensor signal above 20000!')
+    def g():
+        print('Light sensor signal below 5000!')
+
+    l.register_callback(f, 20000, 'rising')
+    l.register_callback(f, 5000, 'falling')
+
+    l.start()
+
+    while True:
+        l.update()
+
