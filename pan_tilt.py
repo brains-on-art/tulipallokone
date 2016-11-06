@@ -26,14 +26,12 @@ class PanTilt(object):
             raise SyntaxError('Incorrect tilt limits')
 
     def pan(self, angle=0):
+        angle = np.clip(angle, -1, 1)
         pulse = int(np.interp(angle, [-1,0,1], self.pan_limits))
         self.pwm.set_pwm(self.pan_channel, 0, pulse)        
 
     def tilt(self, angle=0):
+        angle = np.clip(angle, -1, 1)
         pulse = int(np.interp(angle, [-1,0,1], self.tilt_limits))
         self.pwm.set_pwm(self.tilt_channel, 0, pulse)
-
-
-
-
          
