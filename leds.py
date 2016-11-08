@@ -9,19 +9,15 @@ import numpy as np
 
 N_LEDS = 100
 
+# Thread targets
 def msg_from_q(q, leds):
+    # something happened with the sensors, change direction
     while True:
-        msg = q.get()
+        msg = q.get() # blocks, so no sleep
         leds.consume_msg(msg)
-        # try:
-        #     msg = q.get(block=False)
-        #     leds.consume_msg(msg)
-        # except Empty:
-        #     pass
-        # leds.next()
-        # time.sleep(0.5)
 
 def update_leds(leds):
+    # timer to advance to chosen direction
     while True:
         leds.next()
         time.sleep(0.5)
@@ -31,39 +27,74 @@ def print_q(leds):
         print(leds.rising, leds.led_status)
         time.sleep(1)
 
-class LedUtil():
-    def __init__(self, n_leds):
+def send_msg_delayed(q):
+    time.sleep(20)
+    q.put("stop")
+    time.sleep(30)
+    q.put("start")
+
+class RadioMeterLight(object):
+    def __init__(self):
+        # self.driver = Adafruit_PCA9685.PCA9685()
+        print('Assuming PWM frequency 60 Hz')
+        # self.driver.set_pwm_freq(60)
+
+    def lighten(self):
+        # self.driver.set_pwm(self.pan_channel, 0, pulse) #TODO
+        print("radiometer light lit")
+        time.sleep(10)
+        return
+
+    def darken(self):
+        # self.driver.set_pwm(self.pan_channel, 0, pulse) #TODO
+        time.sleep(0.5)
+        print("radiometer light darkened")
+
+class StripLed(object):
+    def __init__(self, index):
         # self.driver = DriverLPD8806(104, use_py_spi=True, c_order=ChannelOrder.GRB)
         # self.strip = LEDStrip(driver)
+        self.index = index
+
+    def lighten(self):
+        time.sleep(0.5)
+        print(self.index, "lit")
+        # self.strip.set(self.i, (240,240,240))
+
+    def darken(self):
+        time.sleep(0.5)
+        print(self.index, "darkened")
+        # self.strip.set(self.i, (50,50,50))
+
+class LedOrchestrator(object):
+    def __init__(self, leds_array):
         self.rising = False
-        # self.dir_delta_t = time.time()
-        self.led_status = np.zeros(n_leds)
+        self.leds = leds_array
+        self.led_status = np.zeros(len(self.leds))
 
     def consume_msg(self, msg):
         if msg == "stop":
             self.rising = False
-            # self.dir_delta_t = time.time()
         elif msg == "start":
             self.rising = True
-            # self.dir_delta_t = time.time()
 
-    def recede_next(self):
+    def darken_next(self):
         try:
             #check status array and set the rightmost nonzero index to 0
             prev_i = np.nonzero(self.led_status)[0][-1]
-            # self.strip.set(prev_i, (50,50,50))
+            self.leds[prev_i].darken()
             self.led_status[prev_i] = 0
         except IndexError:
             return None
 
-    def advance_next(self):
+    def lighten_next(self):
         try:
             if len(np.nonzero(self.led_status)[0]) == 0: # all are dark
                 next_i = 0
             else:
                 next_i = np.nonzero(self.led_status)[0][-1] + 1
+            self.leds[next_i].lighten()
             self.led_status[next_i] = 1
-            # self.strip.set(next_i, (240,240,240))
         except IndexError:
             #move to the next steps
             return None
@@ -71,22 +102,21 @@ class LedUtil():
     def next(self):
         # print("next led")
         if self.rising:
-            return self.advance_next()
+            return self.lighten_next()
         else:
-            return self.recede_next()
+            return self.darken_next()
         # self.strip.update()
-
-def send_msg_delayed(q):
-    time.sleep(10)
-    q.put("stop")
-    time.sleep(20)
-    q.put("start")
 
 if __name__ == '__main__':
     msg_q = Queue()
     msg_q.put("start")
 
-    led_ctrl = LedUtil(N_LEDS)
+    leds = [StripLed(i) for i in range(10)]
+    leds.append(RadioMeterLight())
+    map(leds.append, [StripLed(i) for i in range(10,100)])
+
+    # led_ctrl = LedOrchestrator(N_LEDS)
+    led_ctrl = LedOrchestrator(leds)
 
     msg_thread = threading.Thread(target=msg_from_q, args=(msg_q,led_ctrl))
     msg_thread.daemon = True
@@ -108,6 +138,6 @@ if __name__ == '__main__':
 
     while True:
         try:
-            time.sleep(1)
+            time.sleep(0.01)
         except KeyboardInterrupt:
             break
