@@ -3,9 +3,10 @@ import sys
 from Queue import Queue, Empty
 import threading
 import time
-# from bibliopixel.led import *
-# from bibliopixel.drivers.LPD8806 import *
+from bibliopixel.led import *
+from bibliopixel.drivers.LPD8806 import *
 import numpy as np
+from lights import RadioMeterLight, StripLed
 
 N_LEDS = 100
 
@@ -20,7 +21,7 @@ def update_leds(leds):
     # timer to advance to chosen direction
     while True:
         leds.next()
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
 def print_q(leds):
     while True:
@@ -28,43 +29,10 @@ def print_q(leds):
         time.sleep(1)
 
 def send_msg_delayed(q):
-    time.sleep(20)
+    time.sleep(10)
     q.put("stop")
     time.sleep(30)
     q.put("start")
-
-class RadioMeterLight(object):
-    def __init__(self):
-        # self.driver = Adafruit_PCA9685.PCA9685()
-        print('Assuming PWM frequency 60 Hz')
-        # self.driver.set_pwm_freq(60)
-
-    def lighten(self):
-        # self.driver.set_pwm(self.pan_channel, 0, pulse) #TODO
-        print("radiometer light lit")
-        time.sleep(10)
-        return
-
-    def darken(self):
-        # self.driver.set_pwm(self.pan_channel, 0, pulse) #TODO
-        time.sleep(0.5)
-        print("radiometer light darkened")
-
-class StripLed(object):
-    def __init__(self, index):
-        # self.driver = DriverLPD8806(104, use_py_spi=True, c_order=ChannelOrder.GRB)
-        # self.strip = LEDStrip(driver)
-        self.index = index
-
-    def lighten(self):
-        time.sleep(0.5)
-        print(self.index, "lit")
-        # self.strip.set(self.i, (240,240,240))
-
-    def darken(self):
-        time.sleep(0.5)
-        print(self.index, "darkened")
-        # self.strip.set(self.i, (50,50,50))
 
 class LedOrchestrator(object):
     def __init__(self, leds_array):
@@ -96,7 +64,7 @@ class LedOrchestrator(object):
             self.leds[next_i].lighten()
             self.led_status[next_i] = 1
         except IndexError:
-            #move to the next steps
+            # go next, so light the balls?
             return None
 
     def next(self):
@@ -105,17 +73,19 @@ class LedOrchestrator(object):
             return self.lighten_next()
         else:
             return self.darken_next()
-        # self.strip.update()
 
 if __name__ == '__main__':
     msg_q = Queue()
     msg_q.put("start")
+    num_leds = 14
+    delay = 0.3
+    driver = DriverLPD8806(num_leds, use_py_spi=True, c_order=ChannelOrder.GRB)
+    strip = LEDStrip(driver)
 
-    leds = [StripLed(i) for i in range(10)]
-    leds.append(RadioMeterLight())
-    map(leds.append, [StripLed(i) for i in range(10,100)])
+    leds = [StripLed(strip, i, delay) for i in range(num_leds)]
+    # leds.append(RadioMeterLight())
+    # map(leds.append, [StripLed(i) for i in range(10,100)])
 
-    # led_ctrl = LedOrchestrator(N_LEDS)
     led_ctrl = LedOrchestrator(leds)
 
     msg_thread = threading.Thread(target=msg_from_q, args=(msg_q,led_ctrl))
@@ -138,6 +108,6 @@ if __name__ == '__main__':
 
     while True:
         try:
-            time.sleep(0.01)
+            time.sleep(0.001)
         except KeyboardInterrupt:
             break
