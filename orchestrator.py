@@ -7,13 +7,14 @@ from bibliopixel.led import *
 from bibliopixel.drivers.LPD8806 import *
 import numpy as np
 from lights import RadioMeterLight, StripLed
+# from light_sensor import LightSensor
 
 N_LEDS = 100
 
 # Thread targets
 def msg_from_q(q, leds):
-    # something happened with the sensors, change direction
     while True:
+        # something happened with the sensors, change direction
         msg = q.get() # blocks, so no sleep
         leds.consume_msg(msg)
 
@@ -21,7 +22,10 @@ def update_leds(leds):
     # timer to advance to chosen direction
     while True:
         leds.next()
-        # time.sleep(0.5)
+
+def update_sensor(sensor):
+    while True:
+        sensor.update()
 
 def print_q(leds):
     while True:
@@ -68,15 +72,26 @@ class LedOrchestrator(object):
             return None
 
     def next(self):
-        # print("next led")
         if self.rising:
             return self.lighten_next()
         else:
             return self.darken_next()
 
+# closure to give to sensor as a callback
+def put_msg_to_q(q, msg):
+    def f():
+        q.put(msg)
+    return f
+
 if __name__ == '__main__':
     msg_q = Queue()
     msg_q.put("start")
+
+    # sensor = LightSensor()
+    # sensor.register_callback(put_msg_to_q(msg_q, 'start'), 10000, 'rising')
+    # sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 10000, 'falling')
+    # sensor.start()
+
     num_leds = 14
     delay = 0.3
     driver = DriverLPD8806(num_leds, use_py_spi=True, c_order=ChannelOrder.GRB)
@@ -85,16 +100,22 @@ if __name__ == '__main__':
     leds = [StripLed(strip, i, delay) for i in range(num_leds)]
     # leds.append(RadioMeterLight())
     # map(leds.append, [StripLed(i) for i in range(10,100)])
-
     led_ctrl = LedOrchestrator(leds)
 
+    # Whenever a message appears in the queue, this function passes it to the led orchestrator
     msg_thread = threading.Thread(target=msg_from_q, args=(msg_q,led_ctrl))
     msg_thread.daemon = True
     msg_thread.start()
 
+    # This is a busy loop which iterates the leds (lights or darkens the "next" one)
     led_thread = threading.Thread(target=update_leds, args=(led_ctrl,))
     led_thread.daemon = True
     led_thread.start()
+
+    # This is a busy loop which updates the sensor values
+    # sensor_thread = threading.Thread(target=update_sensor, args=(sensor,))
+    # sensor_thread.daemon = True
+    # sensor_thread.start()
 
     # FOR TESTING --->
     print_thread = threading.Thread(target=print_q, args=(led_ctrl,))
@@ -110,4 +131,5 @@ if __name__ == '__main__':
         try:
             time.sleep(0.001)
         except KeyboardInterrupt:
+            strip.fill((0,0,0))
             break
