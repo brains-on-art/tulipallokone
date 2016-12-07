@@ -4,22 +4,20 @@ from Queue import Queue, Empty
 import threading
 import time
 from bibliopixel.led import *
-from bibliopixel.drivers.LPD8806 import *
+from bibliopixel.drivers.APA102 import *
 import numpy as np
 from lights import RadioMeterLight, StripLed
 # from light_sensor import LightSensor
-
-N_LEDS = 100
 
 # Thread targets
 def msg_from_q(q, leds):
     while True:
         # something happened with the sensors, change direction
-        msg = q.get() # blocks, so no sleep
+        msg = q.get() # blocks, so no need to sleep
         leds.consume_msg(msg)
 
 def update_leds(leds):
-    # timer to advance to chosen direction
+    # lighten or darken the "next" led, depending on direction
     while True:
         leds.next()
 
@@ -92,9 +90,9 @@ if __name__ == '__main__':
     # sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 10000, 'falling')
     # sensor.start()
 
-    num_leds = 14
+    num_leds = 20
     delay = 0.3
-    driver = DriverLPD8806(num_leds, use_py_spi=True, c_order=ChannelOrder.GRB)
+    driver = DriverAPA102(num_leds, use_py_spi=True, c_order=ChannelOrder.BGR)
     strip = LEDStrip(driver)
 
     leds = [StripLed(strip, i, delay) for i in range(num_leds)]
@@ -118,18 +116,22 @@ if __name__ == '__main__':
     # sensor_thread.start()
 
     # FOR TESTING --->
-    print_thread = threading.Thread(target=print_q, args=(led_ctrl,))
-    print_thread.daemon = True
-    print_thread.start()
+    # print_thread = threading.Thread(target=print_q, args=(led_ctrl,))
+    # print_thread.daemon = True
+    # print_thread.start()
 
     foo_thread = threading.Thread(target=send_msg_delayed, args=(msg_q,))
     foo_thread.daemon = True
     foo_thread.start()
     # <--- FOR TESTING
 
-    while True:
-        try:
-            time.sleep(0.001)
-        except KeyboardInterrupt:
-            strip.fill((0,0,0))
-            break
+    # just keepin this main thread alive, threads are daemoned.
+    try:
+        while True:
+            # I think this helps prevent CPU 100% all the time...
+            time.sleep(0.01)
+            pass
+    except KeyboardInterrupt:
+        strip.fill((0,0,0))
+        strip.update()
+        print("bye")
