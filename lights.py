@@ -27,7 +27,7 @@ class StripLed(object):
 
     def lighten(self):
         # print(self.i, "lit")
-        self.strip.set(self.i, (200,200,200))
+        self.strip.set(self.i, (1,1,1))
 	self.strip.update()
         time.sleep(self.delay)
 
