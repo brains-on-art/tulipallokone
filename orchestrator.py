@@ -8,6 +8,7 @@ from bibliopixel.drivers.APA102 import *
 import numpy as np
 from lights import RadioMeterLight, StripLed
 # from light_sensor import LightSensor
+from lux_sensor import LightSensor
 
 # Thread targets
 def msg_from_q(q, leds):
@@ -24,6 +25,8 @@ def update_leds(leds):
 def update_sensor(sensor):
     while True:
         sensor.update()
+        time.sleep(0.15)
+        # print(sensor.read())
 
 def print_q(leds):
     while True:
@@ -78,6 +81,7 @@ class LedOrchestrator(object):
 # closure to give to sensor as a callback
 def put_msg_to_q(q, msg):
     def f():
+        print(msg)
         q.put(msg)
     return f
 
@@ -85,12 +89,12 @@ if __name__ == '__main__':
     msg_q = Queue()
     msg_q.put("start")
 
-    # sensor = LightSensor()
-    # sensor.register_callback(put_msg_to_q(msg_q, 'start'), 10000, 'rising')
-    # sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 10000, 'falling')
+    sensor = LightSensor()
+    sensor.register_callback(put_msg_to_q(msg_q, 'start'), 100, 'rising')
+    sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 100, 'falling')
     # sensor.start()
 
-    num_leds = 20
+    num_leds = 10
     delay = 0.3
     driver = DriverAPA102(num_leds, use_py_spi=True, c_order=ChannelOrder.BGR)
     strip = LEDStrip(driver)
@@ -111,18 +115,18 @@ if __name__ == '__main__':
     led_thread.start()
 
     # This is a busy loop which updates the sensor values
-    # sensor_thread = threading.Thread(target=update_sensor, args=(sensor,))
-    # sensor_thread.daemon = True
-    # sensor_thread.start()
+    sensor_thread = threading.Thread(target=update_sensor, args=(sensor,))
+    sensor_thread.daemon = True
+    sensor_thread.start()
 
     # FOR TESTING --->
     # print_thread = threading.Thread(target=print_q, args=(led_ctrl,))
     # print_thread.daemon = True
     # print_thread.start()
 
-    foo_thread = threading.Thread(target=send_msg_delayed, args=(msg_q,))
-    foo_thread.daemon = True
-    foo_thread.start()
+    # foo_thread = threading.Thread(target=send_msg_delayed, args=(msg_q,))
+    # foo_thread.daemon = True
+    # foo_thread.start()
     # <--- FOR TESTING
 
     # just keepin this main thread alive, threads are daemoned.
