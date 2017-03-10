@@ -48,11 +48,11 @@ class LightBall(object):
     def lighten(self):
         self.client.connect(self.host, 1883, 1)
         self.client.publish("/lights/{}".format(self.ball_id), "1")
-        print(self.ball_id, "lit")
+        print("ball led ", self.ball_id, "lit")
         time.sleep(self.delay)
 
     def darken(self):
         self.client.connect(self.host, 1883, 1)
         self.client.publish("/lights/{}".format(self.ball_id), "0")
-        print(self.ball_id, "darkened")
+        print("ball led", self.ball_id, "darkened")
         time.sleep(self.delay)

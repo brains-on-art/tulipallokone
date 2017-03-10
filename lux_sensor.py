@@ -54,6 +54,7 @@ class LightSensor(object):
     def update(self):
         value = self.read()
         old_value = self.old_value
+        print('updating value for sensor: cur value {}, old value {}'.format(value, old_value))
         # Rising value
         if value > old_value:
             for x,f in self.rising_thresholds:
@@ -63,6 +64,7 @@ class LightSensor(object):
             for x,f in self.falling_thresholds:
                 if x < old_value and x > value:
                     f()
+        return value
 
     def convertToNumber(self, data):
         return ((data[1] + (256 * data[0])) / 1.2)

@@ -6,7 +6,7 @@ import time
 from bibliopixel.led import *
 from bibliopixel.drivers.APA102 import *
 import numpy as np
-from lights import RadioMeterLight, StripLed
+from lights import RadioMeterLight, StripLed, LightBall
 # from light_sensor import LightSensor
 from lux_sensor import LightSensor
 
@@ -21,23 +21,24 @@ def update_leds(leds):
     # lighten or darken the "next" led, depending on direction
     while True:
         leds.next()
+        time.sleep(0.15)
 
 def update_sensor(sensor):
     while True:
         sensor.update()
-        time.sleep(0.15)
-        # print(sensor.read())
+        #print(sensor.read())
+        time.sleep(0.2)
 
-def print_q(leds):
-    while True:
-        print(leds.rising, leds.led_status)
-        time.sleep(1)
-
-def send_msg_delayed(q):
-    time.sleep(10)
-    q.put("stop")
-    time.sleep(30)
-    q.put("start")
+# def print_q(leds):
+#     while True:
+#         print(leds.rising, leds.led_status)
+#         time.sleep(1)
+# 
+# def send_msg_delayed(q):
+#     time.sleep(10)
+#     q.put("stop")
+#     time.sleep(30)
+#     q.put("start")
 
 class LedOrchestrator(object):
     def __init__(self, leds_array):
@@ -87,11 +88,11 @@ def put_msg_to_q(q, msg):
 
 if __name__ == '__main__':
     msg_q = Queue()
-    msg_q.put("start")
+    msg_q.put("stop")
 
     sensor = LightSensor()
-    sensor.register_callback(put_msg_to_q(msg_q, 'start'), 100, 'rising')
-    sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 100, 'falling')
+    sensor.register_callback(put_msg_to_q(msg_q, 'start'), 50, 'rising')
+    sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 50, 'falling')
     # sensor.start()
 
     num_leds = 10
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     strip = LEDStrip(driver)
 
     leds = [StripLed(strip, i, delay) for i in range(num_leds)]
-    # leds.append(RadioMeterLight())
+    leds.append(LightBall('localhost', 1))
     # map(leds.append, [StripLed(i) for i in range(10,100)])
     led_ctrl = LedOrchestrator(leds)
 
@@ -129,11 +130,15 @@ if __name__ == '__main__':
     # foo_thread.start()
     # <--- FOR TESTING
 
+    counter = 0
+
     # just keepin this main thread alive, threads are daemoned.
     try:
         while True:
             # I think this helps prevent CPU 100% all the time...
-            time.sleep(0.01)
+            print('loop {}'.format(counter))
+            counter += 1
+            time.sleep(1)
             pass
     except KeyboardInterrupt:
         strip.fill((0,0,0))
