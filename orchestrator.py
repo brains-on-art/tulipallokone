@@ -33,12 +33,16 @@ def update_sensor(sensor):
 #     while True:
 #         print(leds.rising, leds.led_status)
 #         time.sleep(1)
-# 
-# def send_msg_delayed(q):
-#     time.sleep(10)
-#     q.put("stop")
-#     time.sleep(30)
-#     q.put("start")
+#
+def send_msg_delayed(q):
+    q.put("start")
+    print("sent message START")
+    time.sleep(40)
+    q.put("stop")
+    print("sent message STOP")
+    time.sleep(40)
+    q.put("start")
+    print("sent message START")
 
 class LedOrchestrator(object):
     def __init__(self, leds_array):
@@ -93,15 +97,39 @@ if __name__ == '__main__':
     sensor = LightSensor()
     sensor.register_callback(put_msg_to_q(msg_q, 'start'), 50, 'rising')
     sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 50, 'falling')
-    # sensor.start()
 
-    num_leds = 10
-    delay = 0.3
+    num_leds = 176
+    lit_delay = 0.1
+    dark_delay = 0.01
     driver = DriverAPA102(num_leds, use_py_spi=True, c_order=ChannelOrder.BGR)
     strip = LEDStrip(driver)
 
-    leds = [StripLed(strip, i, delay) for i in range(num_leds)]
-    leds.append(LightBall('localhost', 1))
+    # Construct array of light objects to correspond to the physical piece
+    # 1. "light hose"
+    leds = [StripLed(strip, i, lit_delay, dark_delay, (150,150,150)) for i in range(100, 120)]
+    # leds = [StripLed(strip, i, lit_delay, dark_delay) for i in range(20)]
+
+    # 2. barrel
+    # all consecutive
+    # map(leds.append, [StripLed(strip, i, lit_delay) for i in range(120, 192)])
+    # OR every other first and the the rest
+    # map(leds.append, [StripLed(strip, i, 0.01, dark_delay, (1,1,1)) for i in range(120,176,2)])
+    # map(leds.append, [StripLed(strip, i, 0.3, dark_delay) for i in range(121,176,2)])
+    # OR only the "rodded" leds, picked out by trial and error
+    # map(leds.append, [StripLed(strip, i, 0, dark_delay, (1,1,1)) for i in range(120,176)])
+    leds.append(StripLed(strip, 123, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 129, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 137, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 143, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 151, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 158, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 165, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 173, lit_delay=0.5, dark_delay=0.5))
+
+    # 3. individual light balls at the end
+    leds.append(LightBall('localhost', 1, 3))
+    leds.append(LightBall('localhost', 2, 3))
+    leds.append(LightBall('localhost', 3, 3))
     # map(leds.append, [StripLed(i) for i in range(10,100)])
     led_ctrl = LedOrchestrator(leds)
 
@@ -116,18 +144,18 @@ if __name__ == '__main__':
     led_thread.start()
 
     # This is a busy loop which updates the sensor values
-    sensor_thread = threading.Thread(target=update_sensor, args=(sensor,))
-    sensor_thread.daemon = True
-    sensor_thread.start()
+    # sensor_thread = threading.Thread(target=update_sensor, args=(sensor,))
+    # sensor_thread.daemon = True
+    # sensor_thread.start()
 
     # FOR TESTING --->
     # print_thread = threading.Thread(target=print_q, args=(led_ctrl,))
     # print_thread.daemon = True
     # print_thread.start()
 
-    # foo_thread = threading.Thread(target=send_msg_delayed, args=(msg_q,))
-    # foo_thread.daemon = True
-    # foo_thread.start()
+    foo_thread = threading.Thread(target=send_msg_delayed, args=(msg_q,))
+    foo_thread.daemon = True
+    foo_thread.start()
     # <--- FOR TESTING
 
     counter = 0
@@ -136,11 +164,12 @@ if __name__ == '__main__':
     try:
         while True:
             # I think this helps prevent CPU 100% all the time...
-            print('loop {}'.format(counter))
+            # print('loop {}'.format(counter))
             counter += 1
             time.sleep(1)
             pass
     except KeyboardInterrupt:
         strip.fill((0,0,0))
         strip.update()
+        # map(lambda l: l.darken(), leds)
         print("bye")
