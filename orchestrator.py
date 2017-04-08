@@ -117,14 +117,14 @@ if __name__ == '__main__':
     # map(leds.append, [StripLed(strip, i, 0.3, dark_delay) for i in range(121,176,2)])
     # OR only the "rodded" leds, picked out by trial and error
     # map(leds.append, [StripLed(strip, i, 0, dark_delay, (1,1,1)) for i in range(120,176)])
-    leds.append(StripLed(strip, 123, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 122, lit_delay=0.5, dark_delay=0.5))
     leds.append(StripLed(strip, 129, lit_delay=0.5, dark_delay=0.5))
-    leds.append(StripLed(strip, 137, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 136, lit_delay=0.5, dark_delay=0.5))
     leds.append(StripLed(strip, 143, lit_delay=0.5, dark_delay=0.5))
-    leds.append(StripLed(strip, 151, lit_delay=0.5, dark_delay=0.5))
-    leds.append(StripLed(strip, 158, lit_delay=0.5, dark_delay=0.5))
-    leds.append(StripLed(strip, 165, lit_delay=0.5, dark_delay=0.5))
-    leds.append(StripLed(strip, 173, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 150, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 157, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 164, lit_delay=0.5, dark_delay=0.5))
+    leds.append(StripLed(strip, 171, lit_delay=0.5, dark_delay=0.5))
 
     # 3. individual light balls at the end
     leds.append(LightBall('localhost', 1, 3))
