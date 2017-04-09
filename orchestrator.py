@@ -8,7 +8,8 @@ from bibliopixel.drivers.APA102 import *
 import numpy as np
 from lights import RadioMeterLight, StripLed, LightBall
 # from light_sensor import LightSensor
-from lux_sensor import LightSensor
+#from lux_sensor import LightSensor
+from bh1750 import BH1750
 
 # Thread targets
 def msg_from_q(q, leds):
@@ -27,7 +28,7 @@ def update_sensor(sensor):
     while True:
         sensor.update()
         #print(sensor.read())
-        time.sleep(0.2)
+        time.sleep(0.05)
 
 # def print_q(leds):
 #     while True:
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     msg_q = Queue()
     msg_q.put("stop")
 
-    sensor = LightSensor()
+    sensor = BH1750()
     sensor.register_callback(put_msg_to_q(msg_q, 'start'), 50, 'rising')
     sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 50, 'falling')
 
