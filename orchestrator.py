@@ -98,15 +98,16 @@ if __name__ == '__main__':
     sensor.register_callback(put_msg_to_q(msg_q, 'start'), 50, 'rising')
     sensor.register_callback(put_msg_to_q(msg_q, 'stop'), 50, 'falling')
 
-    num_leds = 176
-    lit_delay = 0.1
-    dark_delay = 0.01
+    num_leds = 221
+    lit_delay = 0.05
+    #dark_delay = 0.01
+    dark_delay = 0
     driver = DriverAPA102(num_leds, use_py_spi=True, c_order=ChannelOrder.BGR)
     strip = LEDStrip(driver)
 
     # Construct array of light objects to correspond to the physical piece
     # 1. "light hose"
-    leds = [StripLed(strip, i, lit_delay, dark_delay, (150,150,150)) for i in range(100, 120)]
+    leds = [StripLed(strip, i, lit_delay, dark_delay, (100,100,100)) for i in range(120)]
     # leds = [StripLed(strip, i, lit_delay, dark_delay) for i in range(20)]
 
     # 2. barrel
@@ -126,11 +127,18 @@ if __name__ == '__main__':
     leds.append(StripLed(strip, 164, lit_delay=0.5, dark_delay=0.5))
     leds.append(StripLed(strip, 171, lit_delay=0.5, dark_delay=0.5))
 
-    # 3. individual light balls at the end
+    # 3. radiometer superled
+    #leds.append(RadioMeterLight())
+
+    # 4. leds in the "exhaust" pipe
+    map(leds.append, [StripLed(strip, i, lit_delay, dark_delay, (255,255,255)) for i in range(176, 222)])
+
+    # 5. individual light balls at the end
     leds.append(LightBall('localhost', 1, 3))
     leds.append(LightBall('localhost', 2, 3))
     leds.append(LightBall('localhost', 3, 3))
     # map(leds.append, [StripLed(i) for i in range(10,100)])
+    
     led_ctrl = LedOrchestrator(leds)
 
     # Whenever a message appears in the queue, this function passes it to the led orchestrator
@@ -158,14 +166,14 @@ if __name__ == '__main__':
     foo_thread.start()
     # <--- FOR TESTING
 
-    counter = 0
+    #counter = 0
 
     # just keepin this main thread alive, threads are daemoned.
     try:
         while True:
             # I think this helps prevent CPU 100% all the time...
             # print('loop {}'.format(counter))
-            counter += 1
+            #counter += 1
             time.sleep(1)
             pass
     except KeyboardInterrupt:

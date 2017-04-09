@@ -3,7 +3,7 @@ from bibliopixel.drivers.APA102 import *
 import time
 
 if __name__=='__main__':
-    num_leds = 40
+    num_leds = 221
     full_white = (55, 55, 55)
     dark = (0, 0, 0)
 
@@ -18,13 +18,15 @@ if __name__=='__main__':
     strip.update()
 
     while True:
-        ind = ind + (dir * 2)
+        #ind = ind + (dir * 2)
+        ind = ind + dir
 
         if ind <= 0:
             dir = 1
         elif ind >= num_leds:
             dir = -1
-            ind = num_leds - 2
+            #ind = num_leds - 2
+            ind = num_leds -1
         
         if dir == 1:
             strip.set(ind, full_white)
@@ -33,5 +35,5 @@ if __name__=='__main__':
             strip.set(ind, dark)
             strip.update()
 
-        time.sleep(0.2)
+        time.sleep(0.05)
 
