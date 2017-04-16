@@ -1,5 +1,6 @@
 import time
 import paho.mqtt.client as mqtt
+from RPi import GPIO
 
 class RadioMeterLight(object):
     def __init__(self):
@@ -60,4 +61,21 @@ class LightBall(object):
         self.client.connect(self.host, 1883, 1)
         self.client.publish("/lights/{}".format(self.ball_id), "0")
         print("ball led", self.ball_id, "darkened")
+        time.sleep(self.dark_delay)
+
+class BrightLight(object):
+    def __init__(self, pin=16, setup_gpio=True, lit_delay=0.5, dark_delay=0.5):
+        self.pin = pin
+        self.lit_delay = lit_delay
+        self.dark_delay = dark_delay
+        if setup_gpio:
+            GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.LOW)
+
+    def lighten(self):
+        GPIO.output(self.pin, GPIO.HIGH)
+        time.sleep(self.lit_delay)
+
+    def darken(self):
+        GPIO.output(self.pin, GPIO.LOW)
         time.sleep(self.dark_delay)
